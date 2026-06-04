@@ -21,16 +21,21 @@ chmod -R 775 storage bootstrap/cache
 # Create storage symlink (if not exists)
 php artisan storage:link --force 2>/dev/null || true
 
-# Clear caches for fresh state
+# Remove ALL cached files (nuke stale cache from previous deploys)
+rm -rf bootstrap/cache/*.php bootstrap/cache/*.json 2>/dev/null || true
+rm -rf storage/framework/cache/data/* 2>/dev/null || true
+
+# Clear all caches (double ensure)
 php artisan config:clear
 php artisan cache:clear
 php artisan view:clear
 php artisan route:clear
+php artisan optimize:clear
 
 # Run migrations
 php artisan migrate --force
 
-# Cache config and routes for production
+# Rebuild caches with fresh Railway env values
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache

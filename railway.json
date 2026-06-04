@@ -1,12 +1,9 @@
 {
   "build": {
-    "builder": "NIXPACKS",
-    "nixpacksConfig": {
-      "phpExtensions": ["pdo", "pdo_mysql", "pdo_pgsql", "mbstring", "xml", "curl", "gd", "fileinfo", "bcmath", "openssl", "tokenizer", "redis", "intl"]
-    }
+    "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "php artisan serve --host=0.0.0.0 --port=$PORT",
+    "startCommand": "bash railway_start.sh",
     "restartPolicyType": "ALWAYS",
     "healthcheckPath": "/up"
   }
