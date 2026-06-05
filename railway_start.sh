@@ -4,6 +4,17 @@ set -e
 
 echo "=== Railway Startup ==="
 
+# Remove any baked-in .env to prevent local dev values (DB_HOST=127.0.0.1, etc.)
+# from overriding Railway-provided environment variables (MYSQLHOST, etc.)
+rm -f .env
+
+# Ensure APP_KEY is set — generate one if Railway doesn't have it configured
+if [ -z "${APP_KEY:-}" ]; then
+    echo "APP_KEY not found in Railway environment — generating temporary key"
+    echo "Set APP_KEY as a Railway variable to persist across deploys"
+    export APP_KEY=$(php artisan key:generate --show --force)
+fi
+
 # Ensure storage directories exist
 mkdir -p storage/app/public
 mkdir -p storage/framework/cache
@@ -20,10 +31,9 @@ php artisan storage:link --force 2>/dev/null || true
 rm -rf bootstrap/cache/*.php bootstrap/cache/*.json 2>/dev/null || true
 rm -rf storage/framework/cache/data/* 2>/dev/null || true
 
-# Clear all caches (safe order)
-php artisan optimize:clear
+# Clear config, route, and view caches (NOT cache:clear — CACHE_STORE=database
+# requires a DB connection that may not be ready at this point)
 php artisan config:clear
-php artisan cache:clear
 php artisan route:clear
 php artisan view:clear
 
