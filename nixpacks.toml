@@ -1,0 +1,13 @@
+[phases.setup]
+nixPkgs = ["php", "phpPackages.composer"]
+
+[phases.install]
+cmds = [
+  "composer install --no-dev --optimize-autoloader"
+]
+
+[phases.build]
+cmds = []
+
+[start]
+cmd = "bash railway_start.sh"

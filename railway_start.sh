@@ -13,6 +13,20 @@ if [ -z "${DB_CONNECTION:-}" ] && [ -n "${MYSQLHOST:-}" ]; then
     export DB_CONNECTION=mysql
 fi
 
+if [ "${DB_CONNECTION:-}" = "mysql" ]; then
+    export DB_HOST="${DB_HOST:-${MYSQL_HOST:-${MYSQLHOST:-}}}"
+    export DB_PORT="${DB_PORT:-${MYSQL_PORT:-${MYSQLPORT:-3306}}}"
+    export DB_DATABASE="${DB_DATABASE:-${MYSQL_DATABASE:-${MYSQLDATABASE:-railway}}}"
+    export DB_USERNAME="${DB_USERNAME:-${MYSQL_USER:-${MYSQLUSER:-root}}}"
+    export DB_PASSWORD="${DB_PASSWORD:-${MYSQL_PASSWORD:-${MYSQLPASSWORD:-}}}"
+
+    if [ -z "${DB_HOST:-}" ]; then
+        echo "DB_CONNECTION=mysql but no DB_HOST/MYSQLHOST is set on the Railway app service."
+        echo "Add a MySQL service and reference its MYSQLHOST, MYSQLPORT, MYSQLDATABASE, MYSQLUSER, and MYSQLPASSWORD variables."
+        exit 1
+    fi
+fi
+
 # Ensure APP_KEY is set - generate one if Railway doesn't have it configured.
 if [ -z "${APP_KEY:-}" ]; then
     echo "APP_KEY not found in Railway environment - generating temporary key"
