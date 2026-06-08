@@ -48,14 +48,14 @@ if [ "${DB_CONNECTION:-}" = "mysql" ] && [ -n "${DB_HOST}" ]; then
     echo "Waiting for MySQL to be ready at ${DB_HOST}:${DB_PORT}..."
     max_attempts=30
     attempt=1
-    while ! nc -z "${DB_HOST}" "${DB_PORT}" 2>/dev/null; do
+    while ! php -r "set_error_handler(function(){return true;}); \$c = fsockopen('${DB_HOST}', ${DB_PORT}, \$err, \$errstr, 2); if(\$c){fclose(\$c);exit(0);}exit(1);" 2>/dev/null; do
         if [ $attempt -ge $max_attempts ]; then
             echo "ERROR: Could not connect to MySQL after $max_attempts attempts"
             echo "Verify: 1) MySQL service is running, 2) Services are linked in Railway"
             exit 1
         fi
         echo "  Attempt $attempt/$max_attempts..."
-        sleep 2
+        sleep 3
         attempt=$((attempt + 1))
     done
     echo "✓ MySQL is ready!"
