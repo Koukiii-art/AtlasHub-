@@ -21,12 +21,28 @@ if [ "${DB_CONNECTION:-}" = "mysql" ]; then
     export DB_PASSWORD="${DB_PASSWORD:-${MYSQL_PASSWORD:-${MYSQLPASSWORD:-}}}"
 
     if [ -z "${DB_HOST:-}" ]; then
-        echo "DB_CONNECTION=mysql but no DB_HOST/MYSQLHOST is set on the Railway app service."
+        echo "ERROR: DB_CONNECTION=mysql but no DB_HOST/MYSQLHOST is set on the Railway app service."
         echo "Add a MySQL service and reference its MYSQLHOST, MYSQLPORT, MYSQLDATABASE, MYSQLUSER, and MYSQLPASSWORD variables."
         exit 1
     fi
 
     echo "Database config: connection=${DB_CONNECTION}, host=${DB_HOST}, port=${DB_PORT}, database=${DB_DATABASE}"
+    
+    # Wait for MySQL to be ready (retry up to 30 times with 2-second intervals)
+    echo "Waiting for MySQL to be ready..."
+    max_attempts=30
+    attempt=1
+    until php artisan tinker --execute="DB::connection()->getPdo();" 2>/dev/null || [ $attempt -eq $max_attempts ]; do
+        echo "  Attempt $attempt/$max_attempts - MySQL not ready yet, retrying in 2s..."
+        sleep 2
+        attempt=$((attempt + 1))
+    done
+    
+    if [ $attempt -eq $max_attempts ]; then
+        echo "ERROR: Could not connect to MySQL after $max_attempts attempts"
+        exit 1
+    fi
+    echo "✓ MySQL is ready!"
 fi
 
 # Ensure APP_KEY is set - generate one if Railway doesn't have it configured.
@@ -57,6 +73,21 @@ rm -rf storage/framework/cache/data/* 2>/dev/null || true
 php artisan config:clear
 php artisan route:clear
 php artisan view:clear
+
+# Run migrations
+if [ "${DB_CONNECTION:-}" = "mysql" ]; then
+    echo "Running database migrations..."
+    php artisan migrate --force
+    echo "✓ Migrations completed"
+fi
+
+# Cache config for production
+php artisan config:cache
+php artisan route:cache
+
+# Start the application
+echo "✓ Starting Laravel application..."
+exec php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
 
 # Run migrations
 php artisan migrate --force
