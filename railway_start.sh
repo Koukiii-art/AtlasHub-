@@ -25,6 +25,8 @@ if [ "${DB_CONNECTION:-}" = "mysql" ]; then
         echo "Add a MySQL service and reference its MYSQLHOST, MYSQLPORT, MYSQLDATABASE, MYSQLUSER, and MYSQLPASSWORD variables."
         exit 1
     fi
+
+    echo "Database config: connection=${DB_CONNECTION}, host=${DB_HOST}, port=${DB_PORT}, database=${DB_DATABASE}"
 fi
 
 # Ensure APP_KEY is set - generate one if Railway doesn't have it configured.
