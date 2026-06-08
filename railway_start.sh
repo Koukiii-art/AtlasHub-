@@ -8,6 +8,10 @@ echo "=== Railway Startup ==="
 # from overriding Railway-provided environment variables (MYSQLHOST, etc.)
 rm -f .env
 
+# Debug: Print all environment variables starting with DB_ or MYSQL
+echo "Environment variables:"
+env | grep -E "(^DB_|^MYSQL)" | head -20 || true
+
 # Use Railway MySQL automatically when the database variables are present.
 if [ -z "${DB_CONNECTION:-}" ] && [ -n "${MYSQLHOST:-}" ]; then
     export DB_CONNECTION=mysql
@@ -22,26 +26,27 @@ if [ "${DB_CONNECTION:-}" = "mysql" ]; then
 
     if [ -z "${DB_HOST:-}" ]; then
         echo "ERROR: DB_CONNECTION=mysql but no DB_HOST/MYSQLHOST is set on the Railway app service."
-        echo "Add a MySQL service and reference its MYSQLHOST, MYSQLPORT, MYSQLDATABASE, MYSQLUSER, and MYSQLPASSWORD variables."
+        echo "Missing environment variables. Check Railway Variables tab."
+        echo "Required: MYSQLHOST, MYSQLPORT, MYSQLDATABASE, MYSQLUSER, MYSQLPASSWORD"
+        sleep 5
         exit 1
     fi
 
-    echo "Database config: connection=${DB_CONNECTION}, host=${DB_HOST}, port=${DB_PORT}, database=${DB_DATABASE}"
+    echo "Database config: host=${DB_HOST}, port=${DB_PORT}, database=${DB_DATABASE}, user=${DB_USERNAME}"
     
-    # Wait for MySQL to be ready (retry up to 30 times with 2-second intervals)
-    echo "Waiting for MySQL to be ready..."
+    # Wait for MySQL to be ready using nc (netcat) - simple TCP connection test
+    echo "Waiting for MySQL to be ready at ${DB_HOST}:${DB_PORT}..."
     max_attempts=30
     attempt=1
-    until php artisan tinker --execute="DB::connection()->getPdo();" 2>/dev/null || [ $attempt -eq $max_attempts ]; do
+    while ! nc -z "${DB_HOST}" "${DB_PORT}" 2>/dev/null; do
+        if [ $attempt -ge $max_attempts ]; then
+            echo "ERROR: Could not connect to MySQL after $max_attempts attempts"
+            exit 1
+        fi
         echo "  Attempt $attempt/$max_attempts - MySQL not ready yet, retrying in 2s..."
         sleep 2
         attempt=$((attempt + 1))
     done
-    
-    if [ $attempt -eq $max_attempts ]; then
-        echo "ERROR: Could not connect to MySQL after $max_attempts attempts"
-        exit 1
-    fi
     echo "✓ MySQL is ready!"
 fi
 
