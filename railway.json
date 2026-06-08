@@ -1,0 +1,10 @@
+{
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "bash railway_start.sh",
+    "restartPolicyType": "ALWAYS",
+    "healthcheckPath": "/up"
+  }
+}
