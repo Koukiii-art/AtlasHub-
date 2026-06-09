@@ -3,6 +3,18 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+$firstNonEmptyEnv = static function (array $keys, mixed $default = null): mixed {
+    foreach ($keys as $key) {
+        $value = env($key);
+
+        if ($value !== null && $value !== '') {
+            return $value;
+        }
+    }
+
+    return $default;
+};
+
 return [
 
     /*
@@ -17,7 +29,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => $firstNonEmptyEnv(['DB_CONNECTION'], env('MYSQLHOST') ? 'mysql' : 'sqlite'),
 
     /*
     |--------------------------------------------------------------------------
@@ -46,12 +58,12 @@ return [
 
         'mysql' => [
             'driver' => 'mysql',
-            'url' => env('DB_URL'),
-            'host' => env('DB_HOST', env('MYSQL_HOST', env('MYSQLHOST', '127.0.0.1'))),
-            'port' => env('DB_PORT', env('MYSQL_PORT', env('MYSQLPORT', '3306'))),
-            'database' => env('DB_DATABASE', env('MYSQL_DATABASE', env('MYSQLDATABASE', 'railway'))),
-            'username' => env('DB_USERNAME', env('MYSQL_USER', env('MYSQLUSER', 'root'))),
-            'password' => env('DB_PASSWORD', env('MYSQL_PASSWORD', env('MYSQLPASSWORD', ''))),
+            'url' => $firstNonEmptyEnv(['DB_URL', 'MYSQL_URL']),
+            'host' => $firstNonEmptyEnv(['DB_HOST', 'MYSQL_HOST', 'MYSQLHOST'], '127.0.0.1'),
+            'port' => $firstNonEmptyEnv(['DB_PORT', 'MYSQL_PORT', 'MYSQLPORT'], '3306'),
+            'database' => $firstNonEmptyEnv(['DB_DATABASE', 'MYSQL_DATABASE', 'MYSQLDATABASE'], 'railway'),
+            'username' => $firstNonEmptyEnv(['DB_USERNAME', 'MYSQL_USER', 'MYSQLUSER'], 'root'),
+            'password' => $firstNonEmptyEnv(['DB_PASSWORD', 'MYSQL_PASSWORD', 'MYSQLPASSWORD'], ''),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => env('DB_CHARSET', 'utf8mb4'),
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
