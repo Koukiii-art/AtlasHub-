@@ -16,18 +16,54 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Create or update admin user
-        User::firstOrCreate(
+        $admin = User::firstOrCreate(
             ['email' => 'sweetkouki73@gmail.com'],
             [
-                'name' => 'Admin',
-                'password' => bcrypt(env('ADMIN_PASSWORD', str()->random(32))),
+                'name' => 'Admin User',
+                'password' => bcrypt('admin123'),
                 'is_organizer' => true,
             ]
         );
 
-        // Create test users if they don't exist
-        if (User::where('is_organizer', false)->count() < 5) {
-            User::factory(5)->create();
+        // Create test users with specific details
+        $testUsers = [
+            [
+                'name' => 'John Doe',
+                'email' => 'john@example.com',
+                'password' => bcrypt('password123'),
+                'is_organizer' => false,
+            ],
+            [
+                'name' => 'Sarah Smith',
+                'email' => 'sarah@example.com',
+                'password' => bcrypt('password123'),
+                'is_organizer' => false,
+            ],
+            [
+                'name' => 'Mike Johnson',
+                'email' => 'mike@example.com',
+                'password' => bcrypt('password123'),
+                'is_organizer' => true,
+            ],
+            [
+                'name' => 'Emily Wilson',
+                'email' => 'emily@example.com',
+                'password' => bcrypt('password123'),
+                'is_organizer' => false,
+            ],
+            [
+                'name' => 'David Brown',
+                'email' => 'david@example.com',
+                'password' => bcrypt('password123'),
+                'is_organizer' => false,
+            ],
+        ];
+
+        foreach ($testUsers as $userData) {
+            User::firstOrCreate(
+                ['email' => $userData['email']],
+                $userData
+            );
         }
 
         // Seed events, reviews, and other data
