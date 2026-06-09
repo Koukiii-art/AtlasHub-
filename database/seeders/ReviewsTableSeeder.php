@@ -2,41 +2,49 @@
 
 namespace Database\Seeders;
 
+use App\Models\Review;
+use App\Models\User;
+use App\Models\Event;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class ReviewsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('reviews')->insert([
+        $users = User::where('is_organizer', false)->get();
+        $events = Event::all();
+
+        if ($users->isEmpty() || $events->isEmpty()) {
+            return; // Skip if no users or events
+        }
+
+        // Create reviews for various events
+        $reviews = [
             [
-                'name' => 'Youssef Benali',
-                'role' => 'Tech Entrepreneur, Casablanca',
-                'avatar' => 'https://randomuser.me/api/portraits/men/32.jpg',
-                'stars' => 5,
-                'text' => 'Excellent platform for discovering professional events! I found GITEX through Atlasevents and it was a game-changer for my business.',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'user_id' => $users->first()->id ?? 1,
+                'event_id' => $events->first()->id ?? 1,
+                'rating' => 5,
+                'title' => 'Excellent Event!',
+                'comment' => 'This was an amazing experience. The speakers were knowledgeable and the organization was perfect.',
             ],
             [
-                'name' => 'Fatima Zahra El Mansouri',
-                'role' => 'Marketing Director, Marrakech',
-                'avatar' => 'https://randomuser.me/api/portraits/women/68.jpg',
-                'stars' => 5,
-                'text' => 'As a marketing professional, I attend many conferences. Atlasevents has become my go-to platform for discovering relevant events.',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'user_id' => $users->get(1)?->id ?? 1,
+                'event_id' => $events->get(1)?->id ?? 1,
+                'rating' => 5,
+                'title' => 'Highly Recommended',
+                'comment' => 'Great networking opportunities and very professional event. Will attend again!',
             ],
             [
-                'name' => 'Karim Idrissi',
-                'role' => 'Startup Founder, Rabat',
-                'avatar' => 'https://randomuser.me/api/portraits/men/45.jpg',
-                'stars' => 5,
-                'text' => 'From tech summits to industry meetups, I\'ve discovered so many valuable events here. Highly recommended!',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'user_id' => $users->get(2)?->id ?? 1,
+                'event_id' => $events->get(2)?->id ?? 1,
+                'rating' => 4,
+                'title' => 'Very Good',
+                'comment' => 'Well-organized event with good content. Looking forward to the next one.',
             ],
-        ]);
+        ];
+
+        foreach ($reviews as $review) {
+            Review::create($review);
+        }
     }
 }

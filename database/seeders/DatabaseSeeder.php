@@ -15,11 +15,25 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Create or update admin user
+        User::firstOrCreate(
+            ['email' => 'sweetkouki73@gmail.com'],
+            [
+                'name' => 'Admin',
+                'password' => bcrypt(env('ADMIN_PASSWORD', str()->random(32))),
+                'is_organizer' => true,
+            ]
+        );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Create test users if they don't exist
+        if (User::where('is_organizer', false)->count() < 5) {
+            User::factory(5)->create();
+        }
+
+        // Seed events, reviews, and other data
+        $this->call([
+            EventsTableSeeder::class,
+            ReviewsTableSeeder::class,
         ]);
     }
 }

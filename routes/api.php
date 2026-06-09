@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\ContactController;
 use App\Http\Controllers\API\EventController;
 use App\Http\Controllers\API\ReviewController;
 use App\Http\Controllers\API\NotificationController;
@@ -47,6 +48,9 @@ Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallbac
 Route::get('/auth/github', [AuthController::class, 'redirectToGitHub']);
 Route::get('/auth/github/callback', [AuthController::class, 'handleGitHubCallback']);
 
+// Contact form (public – no auth required)
+Route::post('/contact', [ContactController::class, 'send']);
+
 // Public event routes
 Route::get('/events', [EventController::class, 'index']);
 Route::get('/events/{id}', [EventController::class, 'show']);
@@ -60,6 +64,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth routes
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+    Route::post('/user', [AuthController::class, 'updateProfile']);
     Route::put('/user', [AuthController::class, 'updateProfile']);
     
     // Event routes (authenticated)
@@ -100,7 +105,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/settings', [UserSettingsController::class, 'show']);
     Route::put('/settings', [UserSettingsController::class, 'update']);
 
-    // Admin routes (kaoutarsaydi0@gmail.com only)
+    // Admin routes (sweetkouki73@gmail.com only)
     Route::prefix('admin')->group(function () {
         Route::get('/stats',                        [\App\Http\Controllers\API\AdminController::class, 'stats']);
         Route::get('/overview',                     [\App\Http\Controllers\API\AdminController::class, 'overview']);

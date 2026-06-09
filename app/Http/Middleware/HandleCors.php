@@ -15,20 +15,51 @@ class HandleCors
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Get allowed origins from environment or use defaults
+        $allowedOrigins = [
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+            'http://localhost:3001',
+            'http://127.0.0.1:3001',
+        ];
+
+        // Add frontend URL from environment if set
+        $frontendUrl = config('app.frontend_url') ?: env('FRONTEND_URL');
+        if ($frontendUrl && !in_array($frontendUrl, $allowedOrigins)) {
+            $allowedOrigins[] = $frontendUrl;
+        }
+
+        $origin = $request->header('Origin');
+        $isAllowedOrigin = in_array($origin, $allowedOrigins);
+
         // Handle preflight OPTIONS request
         if ($request->isMethod('OPTIONS')) {
-            return response('', 200)
-                ->header('Access-Control-Allow-Origin', 'http://localhost:3000')
-                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-TOKEN')
-                ->header('Access-Control-Allow-Credentials', 'true');
+            $response = response('', 200);
+            
+            if ($isAllowedOrigin) {
+                $response->header('Access-Control-Allow-Origin', $origin);
+            } else {
+                $response->header('Access-Control-Allow-Origin', $allowedOrigins[0]);
+            }
+            
+            $response->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, X-Requested-With, X-CSRF-TOKEN')
+                ->header('Access-Control-Allow-Credentials', 'true')
+                ->header('Access-Control-Max-Age', '86400');
+            
+            return $response;
         }
 
         $response = $next($request);
 
-        $response->headers->set('Access-Control-Allow-Origin', 'http://localhost:3000');
-        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-TOKEN');
+        if ($isAllowedOrigin) {
+            $response->headers->set('Access-Control-Allow-Origin', $origin);
+        } else {
+            $response->headers->set('Access-Control-Allow-Origin', $allowedOrigins[0]);
+        }
+        
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, X-Requested-With, X-CSRF-TOKEN');
         $response->headers->set('Access-Control-Allow-Credentials', 'true');
 
         return $response;

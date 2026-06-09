@@ -10,6 +10,7 @@ use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
 
 class EventController extends Controller
 {
@@ -124,6 +125,28 @@ class EventController extends Controller
             'event_image' => $event->image,
             'is_read'     => false,
         ]);
+
+        // Send email to admin
+        try {
+            $contactEmail = env('CONTACT_EMAIL', 'sweetkouki73@gmail.com');
+            $emailContent = "New Event Created!\n\n" .
+                "Title: " . $event->title . "\n" .
+                "Description: " . $event->description . "\n" .
+                "Date: " . $event->date . "\n" .
+                "Time: " . $event->time . "\n" .
+                "Price: $" . $event->price . "\n" .
+                "Category: " . $event->category . "\n" .
+                "Location: " . $event->location . "\n" .
+                "Number of Places: " . $event->numberOfPlaces . "\n" .
+                "Created by User ID: " . $event->user_id;
+                
+            \Illuminate\Support\Facades\Mail::raw($emailContent, function ($message) use ($contactEmail, $event) {
+                $message->to($contactEmail)
+                        ->subject('New Event Submitted: ' . $event->title);
+            });
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send event creation email: ' . $e->getMessage());
+        }
 
         return response()->json([
             'success' => true,

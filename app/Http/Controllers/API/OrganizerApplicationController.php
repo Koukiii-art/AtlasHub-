@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\OrganizerApplication;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Mail;
 
 class OrganizerApplicationController extends Controller
 {
@@ -72,6 +73,33 @@ class OrganizerApplicationController extends Controller
             'motivation'   => $validated['motivation'],
             'status'       => 'pending',
         ]);
+
+        // Send email to admin
+        try {
+            $contactEmail = env('CONTACT_EMAIL', 'sweetkouki73@gmail.com');
+            $emailContent = "New Organizer Application Submitted!\n\n" .
+                "Name: " . $validated['full_name'] . "\n" .
+                "Phone: " . $validated['phone'] . "\n" .
+                "CIN: " . ($validated['cin'] ?? 'N/A') . "\n" .
+                "Social Link: " . ($validated['social_link'] ?? 'N/A') . "\n" .
+                "Organization: " . ($validated['organization'] ?? 'N/A') . "\n" .
+                "Motivation: " . $validated['motivation'] . "\n" .
+                "User ID: " . $request->user()->id;
+                
+            \Illuminate\Support\Facades\Mail::raw($emailContent, function ($message) use ($contactEmail, $validated, $cinImagePath) {
+                $message->to($contactEmail)
+                        ->subject('New Organizer Application: ' . $validated['full_name']);
+                
+                if ($cinImagePath) {
+                    $fullPath = storage_path('app/public/' . $cinImagePath);
+                    if (file_exists($fullPath)) {
+                        $message->attach($fullPath);
+                    }
+                }
+            });
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send organizer application email: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message'     => 'Application submitted successfully.',
