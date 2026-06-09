@@ -88,6 +88,9 @@ if [ $MYSQL_READY -eq 1 ]; then
     echo "Running migrations..."
     php artisan migrate --force --no-interaction
     
+    echo "Running seeders..."
+    php artisan db:seed --force --no-interaction
+    
     php artisan config:cache
     php artisan route:cache
     
